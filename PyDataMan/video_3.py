@@ -1,7 +1,9 @@
 import sys
+import io
 import urllib.request
 
 from PyQt5.QtWidgets import *
+
 
 
 class Form(QDialog):
@@ -52,22 +54,22 @@ class Form(QDialog):
         
         try:
             date = "Unknown"
-            fh = urllib.request.urlopen("http://www.bankofcanada.ca/en/markets/csv/exchange_eng.csv")
-            for line in fh:
+            resp = urllib.request.urlopen("http://www.bankofcanada.ca/en/markets/csv/exchange_eng.csv")
+            fh = io.StringIO(resp.read().decode())
+            data = [line.rstrip() for line in fh]
+            for line in data:
                 line = line.rstrip()
                 if not line or line.startswith(("#", "Closing")):
                     continue
-
-            fields = line.split(",")
-            if line.startswith("Date "):
-                date = fields[-1]
-            else:
-                try:
-                    value = float(fields[-1])
-                    self.rates[fields[0]] = value
-                except:
-                    pass
-
+                fields = line.split(",")
+                if line.startswith("Date"):
+                    date = fields[-1]
+                else:
+                    try:
+                        value = float(fields[-1])
+                        self.rates[fields[0]] = value
+                    except:
+                        pass
             return "Exchange rates date: {0}".format(date)
 
         except Exception as err:
